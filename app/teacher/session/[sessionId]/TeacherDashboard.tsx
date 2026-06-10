@@ -2,14 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, Lock, Play, RotateCcw, SkipForward, Unlock } from "lucide-react";
+import { Eye, Lock, Play, RotateCcw, SkipForward, Trash2, Unlock } from "lucide-react";
 import {
   advanceRoundCloud,
   assignStudentToTeamCloud,
   assignTeamsCloud,
+  removeStudentCloud,
   startSessionCloud,
   subscribeClassSession,
   updateLockCloud,
+  updatePhaseCloud,
   updateStatusCloud
 } from "@/lib/classroom-store";
 import { getQuest } from "@/lib/quest-data";
@@ -55,9 +57,13 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
             <p className="text-sm font-bold text-teal">Class code</p>
             <h1 className="font-mono text-5xl font-black">{session.code}</h1>
             <p className="mt-2 text-ink/70">{quest.title} · {round.title}</p>
+            <p className="mt-1 text-sm font-bold text-teal">Class phase: {session.phase === "clues" ? "Decrypting" : "Level intro"}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => void startSessionCloud(session.id)} disabled={!session.students.length}><Play size={18} />Start quest</Button>
+            <Button onClick={() => void startSessionCloud(session.id)} disabled={!session.students.length || session.status === "active"}><Play size={18} />Start quest</Button>
+            <Button variant="secondary" onClick={() => void updatePhaseCloud(session.id, "clues")} disabled={session.status !== "active" || session.phase === "clues"}>
+              <Play size={18} />Begin decrypting
+            </Button>
             <Button variant="secondary" onClick={() => void updateStatusCloud(session.id, "paused")}>Pause</Button>
             <Button variant="secondary" onClick={() => void updateStatusCloud(session.id, "active")}>Resume</Button>
             <Button variant={session.isLocked ? "secondary" : "danger"} onClick={() => void updateLockCloud(session.id, !session.isLocked)}>
@@ -110,7 +116,7 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
           <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-ink/10">
-                {["student name", "connection", "team", "current level", "clue assigned", "clue submitted?", "final answer?", "status"].map((head) => (
+                {["student name", "connection", "team", "current level", "clue assigned", "clue submitted?", "final answer?", "status", "remove"].map((head) => (
                   <th key={head} className="p-3 font-black">{head}</th>
                 ))}
               </tr>
@@ -149,6 +155,16 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
                     <td className="p-3">{student.status === "submitted" || student.status === "correct" ? "yes" : "no"}</td>
                     <td className="p-3">{final ? (final.isCorrect ? "correct" : "submitted") : "no"}</td>
                     <td className="p-3"><span className="rounded bg-mint px-2 py-1 font-bold">{student.status}</span></td>
+                    <td className="p-3">
+                      <Button
+                        aria-label={`Remove ${student.nickname}`}
+                        className="min-h-9 px-3"
+                        variant="secondary"
+                        onClick={() => void removeStudentCloud(session.id, student.id)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </td>
                   </tr>
                 );
               })}

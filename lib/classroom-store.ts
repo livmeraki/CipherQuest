@@ -43,6 +43,7 @@ function buildSession(questId: string): ClassSession {
     code: Math.random().toString(36).slice(2, 8).toUpperCase(),
     questId: quest.id,
     currentRoundId: quest.rounds[0].id,
+    phase: "intro",
     status: "waiting",
     isLocked: false,
     students: [],
@@ -83,7 +84,8 @@ function completeStudentClue(session: ClassSession, studentId: string): ClassSes
   const teamStudents = session.students.filter((student) => team.memberIds.includes(student.id));
   const claimed = new Set(teamStudents.flatMap((student) => student.clueIds ?? (student.clueId ? [student.clueId] : [])));
   const solved = new Set([...(solver.solvedClueIds ?? []), solver.clueId]);
-  const nextClue = round.clues.find((clue) => !claimed.has(clue.id));
+  const nextAssignedClueId = (solver.clueIds ?? []).find((clueId) => !solved.has(clueId));
+  const nextClue = round.clues.find((clue) => clue.id === nextAssignedClueId) ?? round.clues.find((clue) => !claimed.has(clue.id));
 
   return {
     ...session,
@@ -98,6 +100,53 @@ function completeStudentClue(session: ClassSession, studentId: string): ClassSes
         status: nextClue ? "working" : "submitted"
       };
     })
+  };
+}
+
+function removeStudentFromSession(session: ClassSession, studentId: string): ClassSession {
+  const removed = session.students.find((student) => student.id === studentId);
+  const remainingStudents = session.students.filter((student) => student.id !== studentId);
+  const teams = session.teams.map((team) => ({
+    ...team,
+    memberIds: team.memberIds.filter((memberId) => memberId !== studentId)
+  }));
+
+  if (!removed?.teamId) {
+    return { ...session, students: remainingStudents, teams };
+  }
+
+  const removedUnsolvedClueIds = (removed.clueIds ?? [])
+    .filter((clueId) => !(removed.solvedClueIds ?? []).includes(clueId));
+
+  if (!removedUnsolvedClueIds.length) {
+    return { ...session, students: remainingStudents, teams };
+  }
+
+  const teamMemberIds = teams.find((team) => team.id === removed.teamId)?.memberIds ?? [];
+  const teamMembers = remainingStudents.filter((student) => teamMemberIds.includes(student.id));
+
+  if (!teamMembers.length) {
+    return { ...session, students: remainingStudents, teams };
+  }
+
+  const reassignedStudents = remainingStudents.map((student) => ({ ...student }));
+  for (const clueId of removedUnsolvedClueIds) {
+    const candidates = reassignedStudents
+      .filter((student) => teamMemberIds.includes(student.id))
+      .sort((a, b) => (a.clueIds?.length ?? 0) - (b.clueIds?.length ?? 0));
+    const recipient = candidates[0];
+    if (!recipient) continue;
+    recipient.clueIds = Array.from(new Set([...(recipient.clueIds ?? []), clueId]));
+    if (!recipient.clueId) {
+      recipient.clueId = clueId;
+      recipient.status = "working";
+    }
+  }
+
+  return {
+    ...session,
+    students: reassignedStudents,
+    teams
   };
 }
 
@@ -152,6 +201,10 @@ export function setStudentStatus(sessionId: string, studentId: string, status: S
 
 export function completeStudentClueSubmission(sessionId: string, studentId: string) {
   updateSession(sessionId, (session) => completeStudentClue(session, studentId));
+}
+
+export function removeStudent(sessionId: string, studentId: string) {
+  updateSession(sessionId, (session) => removeStudentFromSession(session, studentId));
 }
 
 export function setStudentConnectionStatus(sessionId: string, studentId: string, connectionStatus: Student["connectionStatus"]) {
@@ -244,7 +297,7 @@ export function startSession(sessionId: string) {
         status: "working" as const
       };
     });
-    return assignInitialClues({ ...session, teams: assignedTeams, students, status: "active", isLocked: false }, round);
+    return assignInitialClues({ ...session, teams: assignedTeams, students, phase: "intro", status: "active", isLocked: false }, round);
   });
 }
 
@@ -256,6 +309,7 @@ export function advanceRound(sessionId: string) {
     return assignInitialClues({
       ...session,
       currentRoundId: nextRound.id,
+      phase: "intro",
       students: session.students.map((student) => ({
         ...student,
         currentRoundId: nextRound.id,
@@ -274,6 +328,10 @@ export function updateLock(sessionId: string, isLocked: boolean) {
 
 export function updateStatus(sessionId: string, status: ClassSession["status"]) {
   updateSession(sessionId, (session) => ({ ...session, status }));
+}
+
+export function updatePhase(sessionId: string, phase: ClassSession["phase"]) {
+  updateSession(sessionId, (session) => ({ ...session, phase }));
 }
 
 async function saveCloudSession(session: ClassSession) {
@@ -374,6 +432,11 @@ export async function completeStudentClueSubmissionCloud(sessionId: string, stud
   await updateCloudSession(sessionId, (session) => completeStudentClue(session, studentId));
 }
 
+export async function removeStudentCloud(sessionId: string, studentId: string) {
+  if (!hasSupabaseConfig) return removeStudent(sessionId, studentId);
+  await updateCloudSession(sessionId, (session) => removeStudentFromSession(session, studentId));
+}
+
 export async function setStudentConnectionStatusCloud(sessionId: string, studentId: string, connectionStatus: Student["connectionStatus"]) {
   if (!hasSupabaseConfig) return setStudentConnectionStatus(sessionId, studentId, connectionStatus);
   await updateCloudSession(sessionId, (session) => ({
@@ -454,7 +517,7 @@ export async function startSessionCloud(sessionId: string) {
       const teamMemberIndex = assignedTeams.find((team) => team.id === teamId)?.memberIds.indexOf(student.id) ?? index;
       return { ...student, teamId, currentRoundId: round.id, clueId: round.clues[teamMemberIndex % round.clues.length].id, status: "working" as const };
     });
-    return assignInitialClues({ ...session, teams: assignedTeams, students, status: "active", isLocked: false }, round);
+    return assignInitialClues({ ...session, teams: assignedTeams, students, phase: "intro", status: "active", isLocked: false }, round);
   });
 }
 
@@ -467,6 +530,7 @@ export async function advanceRoundCloud(sessionId: string) {
     return assignInitialClues({
       ...session,
       currentRoundId: nextRound.id,
+      phase: "intro",
       students: session.students.map((student) => ({
         ...student,
         currentRoundId: nextRound.id,
@@ -487,4 +551,9 @@ export async function updateLockCloud(sessionId: string, isLocked: boolean) {
 export async function updateStatusCloud(sessionId: string, status: ClassSession["status"]) {
   if (!hasSupabaseConfig) return updateStatus(sessionId, status);
   await updateCloudSession(sessionId, (session) => ({ ...session, status }));
+}
+
+export async function updatePhaseCloud(sessionId: string, phase: ClassSession["phase"]) {
+  if (!hasSupabaseConfig) return updatePhase(sessionId, phase);
+  await updateCloudSession(sessionId, (session) => ({ ...session, phase }));
 }

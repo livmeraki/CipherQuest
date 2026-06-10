@@ -97,6 +97,30 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
   const teamMembers = session.students.filter((student) => state.team?.memberIds.includes(student.id));
   const visibleTeammates = teamMembers.filter((student) => (student.solvedClueIds ?? []).length > 0);
 
+  if (session.phase !== "clues") {
+    return (
+      <div className="mx-auto max-w-5xl">
+        {session.isLocked && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-ink/95 p-6 text-center text-white">
+            <div>
+              <p className="text-5xl font-black">Paused</p>
+              <p className="mt-4 text-2xl text-mint">Eyes on the teacher.</p>
+            </div>
+          </div>
+        )}
+        <Panel className="p-8 sm:p-10">
+          <p className="text-sm font-black uppercase tracking-wide text-coral">Level {state.round.orderIndex}</p>
+          <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">{state.round.title}</h1>
+          <p className="mt-6 text-xl leading-9 text-ink/75">{state.round.story}</p>
+          <div className="mt-8 rounded-md bg-mint p-5">
+            <p className="font-black text-teal">Waiting for the teacher</p>
+            <p className="mt-1 text-ink/75">Read the level setup together. Your encrypted clue will appear when the teacher begins decrypting.</p>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
       {session.isLocked && (

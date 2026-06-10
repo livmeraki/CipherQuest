@@ -58,6 +58,7 @@ export interface ClassSession {
   code: string;
   questId: string;
   currentRoundId: string;
+  phase?: "intro" | "clues";
   status: "waiting" | "active" | "paused" | "ended";
   isLocked: boolean;
   students: Student[];

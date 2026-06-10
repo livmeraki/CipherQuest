@@ -179,7 +179,7 @@ export const quests: Quest[] = [
   {
     id: "lesson-1-school-notes",
     lesson: "Lesson 1",
-    title: "The Final Bell Cipher: Follow the Trail to Eve",
+    title: "Follow the Secret Message",
     description: "Intro to Cryptography: How to Make a Message Secret",
     rounds: [
       {
