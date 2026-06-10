@@ -11,7 +11,6 @@ export function CaesarTool({ compact = false }: { compact?: boolean }) {
   const [mode, setMode] = useState<"encrypt" | "decrypt">("encrypt");
   const output = useMemo(() => (mode === "encrypt" ? caesarEncrypt(input, shift) : caesarDecrypt(input, shift)), [input, mode, shift]);
   const shifted = ALPHABET.split("").map((letter) => caesarEncrypt(letter, shift));
-  const lastLetter = [...input].reverse().find((letter) => /[a-z]/i.test(letter))?.toUpperCase();
 
   return (
     <Panel className={compact ? "p-4" : ""}>
@@ -47,7 +46,7 @@ export function CaesarTool({ compact = false }: { compact?: boolean }) {
       <div className="overflow-x-auto rounded-md border border-ink/10 bg-paper p-3 font-mono text-sm">
         <div className="mb-2 flex gap-2">
           {ALPHABET.split("").map((letter) => (
-            <span key={letter} className={`grid h-8 w-8 shrink-0 place-items-center rounded ${lastLetter === letter ? "bg-coral text-white" : "bg-white"}`}>
+            <span key={letter} className="grid h-8 w-8 shrink-0 place-items-center rounded bg-white">
               {letter}
             </span>
           ))}
@@ -56,7 +55,7 @@ export function CaesarTool({ compact = false }: { compact?: boolean }) {
           {shifted.map((letter, index) => (
             <span
               key={`${letter}-${index}`}
-              className={`grid h-8 w-8 shrink-0 place-items-center rounded transition ${lastLetter === ALPHABET[index] ? "translate-y-1 bg-teal text-white" : "bg-mint"}`}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded bg-mint"
             >
               {letter}
             </span>

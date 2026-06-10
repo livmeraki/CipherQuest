@@ -2,6 +2,7 @@
 
 import { hasSupabaseConfig, supabase } from "./supabase";
 import { quests } from "./quest-data";
+import type { Round } from "./types";
 import type { ClassSession, Student, Team } from "./types";
 
 const STORAGE_KEY = "cipherquest.sessions";
@@ -53,6 +54,53 @@ function buildSession(questId: string): ClassSession {
   };
 }
 
+function assignInitialClues(session: ClassSession, round: Round): ClassSession {
+  const students: Student[] = session.students.map((student) => ({ ...student, clueId: null, clueIds: [], solvedClueIds: [] }));
+  for (const team of session.teams) {
+    const members = students.filter((student) => team.memberIds.includes(student.id));
+    members.forEach((student, index) => {
+      const clue = round.clues[index];
+      if (clue) {
+        student.clueId = clue.id;
+        student.clueIds = [clue.id];
+        student.status = "working";
+      } else {
+        student.status = "waiting";
+      }
+      student.currentRoundId = round.id;
+    });
+  }
+  return { ...session, students };
+}
+
+function completeStudentClue(session: ClassSession, studentId: string): ClassSession {
+  const quest = quests.find((item) => item.id === session.questId) ?? quests[0];
+  const round = quest.rounds.find((item) => item.id === session.currentRoundId) ?? quest.rounds[0];
+  const solver = session.students.find((student) => student.id === studentId);
+  const team = solver?.teamId ? session.teams.find((item) => item.id === solver.teamId) : null;
+  if (!solver || !team || !solver.clueId) return session;
+
+  const teamStudents = session.students.filter((student) => team.memberIds.includes(student.id));
+  const claimed = new Set(teamStudents.flatMap((student) => student.clueIds ?? (student.clueId ? [student.clueId] : [])));
+  const solved = new Set([...(solver.solvedClueIds ?? []), solver.clueId]);
+  const nextClue = round.clues.find((clue) => !claimed.has(clue.id));
+
+  return {
+    ...session,
+    students: session.students.map((student) => {
+      if (student.id !== studentId) return student;
+      const clueIds = Array.from(new Set([...(student.clueIds ?? []), ...(nextClue ? [nextClue.id] : [])]));
+      return {
+        ...student,
+        clueIds,
+        solvedClueIds: Array.from(solved),
+        clueId: nextClue?.id ?? null,
+        status: nextClue ? "working" : "submitted"
+      };
+    })
+  };
+}
+
 export function getSession(sessionId: string) {
   return readSessions().find((session) => session.id === sessionId) ?? null;
 }
@@ -82,6 +130,8 @@ export function joinSession(code: string, nickname: string): { session: ClassSes
     teamId: null,
     currentRoundId: round.id,
     clueId: null,
+    clueIds: [],
+    solvedClueIds: [],
     status: "waiting",
     connectionStatus: "online",
     joinedAt: new Date().toISOString()
@@ -98,6 +148,10 @@ export function setStudentStatus(sessionId: string, studentId: string, status: S
     ...session,
     students: session.students.map((student) => (student.id === studentId ? { ...student, status } : student))
   }));
+}
+
+export function completeStudentClueSubmission(sessionId: string, studentId: string) {
+  updateSession(sessionId, (session) => completeStudentClue(session, studentId));
 }
 
 export function setStudentConnectionStatus(sessionId: string, studentId: string, connectionStatus: Student["connectionStatus"]) {
@@ -150,7 +204,9 @@ export function assignStudentToTeam(sessionId: string, studentId: string, teamId
             ...student,
             teamId,
             status: session.status === "active" && teamId ? "working" : "waiting",
-            clueId: session.status === "active" ? student.clueId : null
+            clueId: session.status === "active" ? student.clueId : null,
+            clueIds: session.status === "active" ? student.clueIds : [],
+            solvedClueIds: session.status === "active" ? student.solvedClueIds : []
           }
         : student
     ),
@@ -183,10 +239,12 @@ export function startSession(sessionId: string) {
         teamId,
         currentRoundId: round.id,
         clueId: round.clues[teamMemberIndex % round.clues.length].id,
+        clueIds: [],
+        solvedClueIds: [],
         status: "working" as const
       };
     });
-    return { ...session, teams: assignedTeams, students, status: "active", isLocked: false };
+    return assignInitialClues({ ...session, teams: assignedTeams, students, status: "active", isLocked: false }, round);
   });
 }
 
@@ -195,16 +253,18 @@ export function advanceRound(sessionId: string) {
     const quest = quests.find((item) => item.id === session.questId) ?? quests[0];
     const currentIndex = quest.rounds.findIndex((round) => round.id === session.currentRoundId);
     const nextRound = quest.rounds[Math.min(currentIndex + 1, quest.rounds.length - 1)];
-    return {
+    return assignInitialClues({
       ...session,
       currentRoundId: nextRound.id,
-      students: session.students.map((student, index) => ({
+      students: session.students.map((student) => ({
         ...student,
         currentRoundId: nextRound.id,
-        clueId: student.teamId ? nextRound.clues[index % nextRound.clues.length].id : null,
+        clueId: null,
+        clueIds: [],
+        solvedClueIds: [],
         status: student.teamId ? "working" : "waiting"
       }))
-    };
+    }, nextRound);
   });
 }
 
@@ -267,6 +327,8 @@ export async function joinClassSession(code: string, nickname: string) {
     teamId: null,
     currentRoundId: round.id,
     clueId: null,
+    clueIds: [],
+    solvedClueIds: [],
     status: "waiting",
     connectionStatus: "online",
     joinedAt: new Date().toISOString()
@@ -305,6 +367,11 @@ export async function setStudentStatusCloud(sessionId: string, studentId: string
     ...session,
     students: session.students.map((student) => (student.id === studentId ? { ...student, status } : student))
   }));
+}
+
+export async function completeStudentClueSubmissionCloud(sessionId: string, studentId: string) {
+  if (!hasSupabaseConfig) return completeStudentClueSubmission(sessionId, studentId);
+  await updateCloudSession(sessionId, (session) => completeStudentClue(session, studentId));
 }
 
 export async function setStudentConnectionStatusCloud(sessionId: string, studentId: string, connectionStatus: Student["connectionStatus"]) {
@@ -353,7 +420,14 @@ export async function assignStudentToTeamCloud(sessionId: string, studentId: str
     ...session,
     students: session.students.map((student) =>
       student.id === studentId
-        ? { ...student, teamId, status: session.status === "active" && teamId ? "working" : "waiting", clueId: session.status === "active" ? student.clueId : null }
+        ? {
+            ...student,
+            teamId,
+            status: session.status === "active" && teamId ? "working" : "waiting",
+            clueId: session.status === "active" ? student.clueId : null,
+            clueIds: session.status === "active" ? student.clueIds : [],
+            solvedClueIds: session.status === "active" ? student.solvedClueIds : []
+          }
         : student
     ),
     teams: session.teams.map((team) => ({
@@ -380,7 +454,7 @@ export async function startSessionCloud(sessionId: string) {
       const teamMemberIndex = assignedTeams.find((team) => team.id === teamId)?.memberIds.indexOf(student.id) ?? index;
       return { ...student, teamId, currentRoundId: round.id, clueId: round.clues[teamMemberIndex % round.clues.length].id, status: "working" as const };
     });
-    return { ...session, teams: assignedTeams, students, status: "active", isLocked: false };
+    return assignInitialClues({ ...session, teams: assignedTeams, students, status: "active", isLocked: false }, round);
   });
 }
 
@@ -390,16 +464,18 @@ export async function advanceRoundCloud(sessionId: string) {
     const quest = quests.find((item) => item.id === session.questId) ?? quests[0];
     const currentIndex = quest.rounds.findIndex((round) => round.id === session.currentRoundId);
     const nextRound = quest.rounds[Math.min(currentIndex + 1, quest.rounds.length - 1)];
-    return {
+    return assignInitialClues({
       ...session,
       currentRoundId: nextRound.id,
-      students: session.students.map((student, index) => ({
+      students: session.students.map((student) => ({
         ...student,
         currentRoundId: nextRound.id,
-        clueId: student.teamId ? nextRound.clues[index % nextRound.clues.length].id : null,
+        clueId: null,
+        clueIds: [],
+        solvedClueIds: [],
         status: student.teamId ? "working" : "waiting"
       }))
-    };
+    }, nextRound);
   });
 }
 

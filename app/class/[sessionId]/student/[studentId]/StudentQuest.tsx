@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Lightbulb } from "lucide-react";
 import {
+  completeStudentClueSubmissionCloud,
   setStudentConnectionStatusCloud,
   setStudentStatusCloud,
   subscribeClassroomSession,
@@ -16,10 +17,10 @@ import { CipherSidePanel } from "@/components/CipherSidePanel";
 
 export function StudentQuest({ sessionId, studentId }: { sessionId: string; studentId: string }) {
   const [session, setSession] = useState<ClassSession | null>(null);
-  const [decrypted, setDecrypted] = useState("");
-  const [hintLevel, setHintLevel] = useState(0);
+  const [decryptedByClue, setDecryptedByClue] = useState<Record<string, string>>({});
+  const [hintLevelByClue, setHintLevelByClue] = useState<Record<string, number>>({});
   const [finalAnswer, setFinalAnswer] = useState("");
-  const [feedback, setFeedback] = useState("");
+  const [feedbackByClue, setFeedbackByClue] = useState<Record<string, string>>({});
 
   useEffect(() => {
     return subscribeClassroomSession(sessionId, setSession);
@@ -51,7 +52,14 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
     return <Panel>Student session not found. Rejoin with your class code.</Panel>;
   }
 
-  if (session.status !== "active" || !state.team || !state.clue) {
+  const currentClueId = state.clue?.id ?? "";
+  const decrypted = currentClueId ? decryptedByClue[currentClueId] ?? "" : "";
+  const hintLevel = currentClueId ? hintLevelByClue[currentClueId] ?? 0 : 0;
+  const feedback = currentClueId ? feedbackByClue[currentClueId] ?? "" : "";
+
+  const questIsOpen = session.status === "active" || session.isLocked;
+
+  if (!questIsOpen || !state.team) {
     return (
       <div className="mx-auto max-w-3xl">
         <Panel>
@@ -87,15 +95,15 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
 
   const ownClueCorrect = state.student.status === "submitted" || state.student.status === "correct";
   const teamMembers = session.students.filter((student) => state.team?.memberIds.includes(student.id));
-  const visibleTeammates = teamMembers.filter((student) => student.status === "submitted" || student.status === "correct");
+  const visibleTeammates = teamMembers.filter((student) => (student.solvedClueIds ?? []).length > 0);
 
   return (
     <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
       {session.isLocked && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-ink/95 p-6 text-center text-white">
           <div>
-            <p className="text-5xl font-black">Quest paused.</p>
-            <p className="mt-4 text-2xl text-mint">Eyes on teacher.</p>
+            <p className="text-5xl font-black">Paused</p>
+            <p className="mt-4 text-2xl text-mint">Eyes on the teacher.</p>
           </div>
         </div>
       )}
@@ -109,48 +117,70 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-black">Your encrypted clue</h2>
           </div>
-          <div className="rounded-md bg-ink p-4 font-mono text-lg text-white">{state.clue.encryptedText}</div>
-          <label className="mt-4 block text-sm font-bold">Decrypted clue</label>
-          <TextArea disabled={session.isLocked} value={decrypted} onChange={(event) => setDecrypted(event.target.value)} />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              disabled={session.isLocked}
-              onClick={() => {
-                const correct = normalizeAnswer(decrypted) === normalizeAnswer(state.clue!.plaintextText);
-                void setStudentStatusCloud(session.id, studentId, correct ? "submitted" : "needs_help");
-                setFeedback(correct ? "Correct. Your clue is now available to your team." : "Not quite. Try the cipher tool and check the key.");
-              }}
-            >
-              Submit clue
-            </Button>
-            <Button disabled={session.isLocked} variant="secondary" onClick={() => setHintLevel(Math.min(hintLevel + 1, 3))}>
-              <Lightbulb size={18} />Hint
-            </Button>
-          </div>
-          {hintLevel > 0 && <p className="mt-3 rounded-md bg-gold/15 p-3 text-sm font-semibold">{state.clue.hints[hintLevel - 1]}</p>}
-          {feedback && <p className="mt-3 rounded-md bg-mint p-3 font-semibold text-teal">{feedback}</p>}
+          {state.clue ? (
+            <>
+              <div className="rounded-md bg-ink p-4 font-mono text-lg text-white">{state.clue.encryptedText}</div>
+              <label className="mt-4 block text-sm font-bold">Decrypted clue</label>
+              <TextArea
+                disabled={session.isLocked}
+                value={decrypted}
+                onChange={(event) => setDecryptedByClue((current) => ({ ...current, [currentClueId]: event.target.value }))}
+              />
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  disabled={session.isLocked}
+                  onClick={() => {
+                    const correct = normalizeAnswer(decrypted) === normalizeAnswer(state.clue!.plaintextText);
+                    if (correct) {
+                      void completeStudentClueSubmissionCloud(session.id, studentId);
+                      setFeedbackByClue((current) => ({ ...current, [currentClueId]: "Correct. Your clue is now available to your team." }));
+                    } else {
+                      void setStudentStatusCloud(session.id, studentId, "needs_help");
+                      setFeedbackByClue((current) => ({ ...current, [currentClueId]: "Not quite. Try the cipher tool and check the hint." }));
+                    }
+                  }}
+                >
+                  Submit clue
+                </Button>
+                <Button
+                  disabled={session.isLocked}
+                  variant="secondary"
+                  onClick={() => setHintLevelByClue((current) => ({ ...current, [currentClueId]: Math.min(hintLevel + 1, 3) }))}
+                >
+                  <Lightbulb size={18} />Hint
+                </Button>
+              </div>
+              {hintLevel > 0 && <p className="mt-3 rounded-md bg-gold/15 p-3 text-sm font-semibold">{state.clue.hints[hintLevel - 1]}</p>}
+              {feedback && <p className="mt-3 rounded-md bg-mint p-3 font-semibold text-teal">{feedback}</p>}
+            </>
+          ) : (
+            <p className="rounded-md bg-mint p-4 font-semibold text-teal">
+              No active clue is assigned to you right now. Check the team board and help prepare the final answer.
+            </p>
+          )}
         </Panel>
         <Panel>
           <h2 className="text-xl font-black">Team Clue Board</h2>
           <div className="mt-3 grid gap-3">
             {teamMembers.map((student) => {
-              const clue = state.round?.clues.find((item) => item.id === student.clueId);
-              const isVisible = student.status === "submitted" || student.status === "correct";
+              const solvedClues = (student.solvedClueIds ?? [])
+                .map((clueId) => state.round?.clues.find((item) => item.id === clueId))
+                .filter(Boolean);
               return (
                 <div key={student.id} className="rounded-md border border-ink/10 bg-paper p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-black">{student.nickname}</p>
-                    <span className="rounded bg-white px-2 py-1 text-xs font-bold">{isVisible ? "submitted" : "working"}</span>
+                    <span className="rounded bg-white px-2 py-1 text-xs font-bold">{student.status}</span>
                   </div>
-                  <p className="mt-2 text-sm text-ink/70">
-                    {isVisible
-                      ? student.id === studentId
-                        ? decrypted
-                        : clue?.plaintextText
-                      : student.id === studentId
-                        ? "Submit your clue to share it with the team."
-                        : "Waiting for this teammate to submit."}
-                  </p>
+                  {solvedClues.length ? (
+                    <ul className="mt-2 space-y-1 text-sm text-ink/70">
+                      {solvedClues.map((clue) => <li key={clue!.id}>{clue!.plaintextText}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm text-ink/70">
+                      {student.id === studentId ? "Submit your clue to share it with the team." : "Waiting for this teammate to submit."}
+                    </p>
+                  )}
                 </div>
               );
             })}

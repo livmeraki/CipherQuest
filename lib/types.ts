@@ -39,6 +39,8 @@ export interface Student {
   teamId: string | null;
   currentRoundId: string;
   clueId: string | null;
+  clueIds?: string[];
+  solvedClueIds?: string[];
   status: "waiting" | "working" | "submitted" | "correct" | "needs_help";
   connectionStatus: "online" | "offline";
   joinedAt: string;

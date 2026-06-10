@@ -115,36 +115,27 @@ const lesson1Level3: PlainClue[] = [
     text: "Every message left a shadow.",
     shift: 4,
     hints: [
-      "This final log entry still uses Caesar.",
-      "Use shift 4 and read the decrypted sentence carefully.",
-      "For the final name, start watching the first letters."
+      "This final log entry still uses Caesar, but the name is hidden in a pattern.",
+      "Use shift 4, then write the decrypted clue on your evidence sheet.",
+      "Do not answer from this clue alone; compare its first letter with the next clues."
     ]
   },
   {
     text: "Voices travel farther than we think.",
     shift: 9,
     hints: [
-      "Eavesdropping means watching or listening without joining.",
+      "This clue describes messages being heard beyond the intended team.",
       "Move letters backward by 9 to reveal this log line.",
-      "This clue describes observation, not attack."
+      "Keep the first letter of this decrypted clue beside the first one."
     ]
   },
   {
     text: "Encrypted notes can still be watched.",
     shift: 14,
     hints: [
-      "The watcher did not change the trail.",
+      "The log is about observation, not changing or breaking the trail.",
       "The Caesar key is 14 for this error log clue.",
-      "Look at the first letters of the decrypted clues together."
-    ]
-  },
-  {
-    text: "The watcher only observed.",
-    shift: 21,
-    hints: [
-      "This clue does not name a villain.",
-      "Observed means saw or listened without changing anything.",
-      "Eve observes; Mallory attacks. Lesson 1 is only revealing Eve."
+      "The first letters of the first three decrypted clues spell the name."
     ]
   }
 ];
@@ -222,7 +213,7 @@ export const quests: Quest[] = [
       {
         id: "l1-r3",
         orderIndex: 3,
-        title: "The Watcher in the Error Log",
+        title: "The Error Log",
         story:
           "In the computer lab, the LMS error log opens on the main screen. It does not show that anyone broke the system. Instead, it shows that someone has been observing the encrypted trail. The final level asks the team to decrypt the evidence and type the name the trail reveals.",
         cipherType: "caesar",
