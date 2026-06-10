@@ -86,7 +86,7 @@ export function IndividualQuestPlayer({ quest }: { quest: Quest }) {
         </Panel>
 
         <Panel>
-          <p className="text-sm font-bold text-coral">Round {round.orderIndex}</p>
+          <p className="text-sm font-bold text-coral">Level {round.orderIndex}</p>
           <h2 className="text-2xl font-black">{round.title}</h2>
           <p className="mt-2 text-ink/75">{round.story}</p>
         </Panel>

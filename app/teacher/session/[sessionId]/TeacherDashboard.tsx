@@ -63,7 +63,7 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
             <Button variant={session.isLocked ? "secondary" : "danger"} onClick={() => void updateLockCloud(session.id, !session.isLocked)}>
               {session.isLocked ? <Unlock size={18} /> : <Lock size={18} />}{session.isLocked ? "Unlock" : "Lock"}
             </Button>
-            <Button variant="secondary" onClick={() => void advanceRoundCloud(session.id)}><SkipForward size={18} />Next round</Button>
+            <Button variant="secondary" onClick={() => void advanceRoundCloud(session.id)}><SkipForward size={18} />Next level</Button>
           </div>
         </div>
       </Panel>
@@ -103,14 +103,14 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-black">Progress Table</h2>
           <Button variant="secondary" onClick={() => void updateStatusCloud(session.id, "active")}>
-            <RotateCcw size={18} />Reset round
+            <RotateCcw size={18} />Reset level
           </Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-ink/10">
-                {["student name", "connection", "team", "current round", "clue assigned", "clue submitted?", "final answer?", "status"].map((head) => (
+                {["student name", "connection", "team", "current level", "clue assigned", "clue submitted?", "final answer?", "status"].map((head) => (
                   <th key={head} className="p-3 font-black">{head}</th>
                 ))}
               </tr>
