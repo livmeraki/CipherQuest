@@ -94,7 +94,6 @@ export function IndividualQuestPlayer({ quest }: { quest: Quest }) {
         <Panel>
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="text-xl font-black">Clue {clue.clueIndex}</h3>
-            <span className="rounded bg-gold/20 px-2 py-1 text-sm font-bold">{clue.cipherType} key: {clue.cipherKey}</span>
           </div>
           <div className="rounded-md bg-ink p-4 font-mono text-lg text-white">{clue.encryptedText}</div>
           <label className="mt-4 block text-sm font-bold">Your decrypted clue</label>

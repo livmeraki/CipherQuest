@@ -3,19 +3,23 @@ import type { Quest } from "./types";
 
 type PlainClue = {
   text: string;
+  shift?: number;
   hints: [string, string, string];
 };
 
 const buildCaesarClues = (roundId: string, shift: number, clues: PlainClue[]) =>
-  clues.map((clue, index) => ({
-    id: `${roundId}-c${index + 1}`,
-    clueIndex: index + 1,
-    encryptedText: caesarEncrypt(clue.text, shift),
-    plaintextText: clue.text,
-    cipherType: "caesar" as const,
-    cipherKey: String(shift),
-    hints: clue.hints
-  }));
+  clues.map((clue, index) => {
+    const clueShift = clue.shift ?? shift;
+    return {
+      id: `${roundId}-c${index + 1}`,
+      clueIndex: index + 1,
+      encryptedText: caesarEncrypt(clue.text, clueShift),
+      plaintextText: clue.text,
+      cipherType: "caesar" as const,
+      cipherKey: String(clueShift),
+      hints: clue.hints
+    };
+  });
 
 const buildVigenereClues = (roundId: string, keyword: string, clues: PlainClue[]) =>
   clues.map((clue, index) => ({
@@ -31,6 +35,7 @@ const buildVigenereClues = (roundId: string, keyword: string, clues: PlainClue[]
 const lesson1Level1: PlainClue[] = [
   {
     text: "The review guide waits where quiet pages turn.",
+    shift: 3,
     hints: [
       "This frozen LMS note uses a Caesar shift.",
       "The shift number is 3; move each letter backward.",
@@ -39,25 +44,28 @@ const lesson1Level1: PlainClue[] = [
   },
   {
     text: "Do not refresh; follow the first bell to the books.",
+    shift: 5,
     hints: [
       "Punctuation stays the same, but letters move.",
-      "A Caesar key tells how far each letter shifted.",
+      "This strip uses shift 5; move each letter backward.",
       "This clue points away from the screen and toward shelves."
     ]
   },
   {
     text: "The first clue hides where printers hum softly.",
+    shift: 8,
     hints: [
       "Look for the same shift on every alphabet letter.",
-      "Try decrypting one short word first, then the whole sentence.",
+      "Use shift 8 for this clue; try one short word first.",
       "Printers and books can share the same school space."
     ]
   },
   {
     text: "Bring your team to the place where whispers beat alarms.",
+    shift: 11,
     hints: [
       "This is still Caesar, not a new cipher yet.",
-      "Move letters backward by 3 to recover the plaintext.",
+      "Move letters backward by 11 to recover this plaintext.",
       "A place that rewards whispers is probably not the cafeteria."
     ]
   }
@@ -66,6 +74,7 @@ const lesson1Level1: PlainClue[] = [
 const lesson1Level2: PlainClue[] = [
   {
     text: "The next signal blinks where thirty keyboards wait.",
+    shift: 7,
     hints: [
       "The printer trail uses Caesar again, but the key changed.",
       "Use shift 7 this time; the old shift will make nonsense.",
@@ -74,25 +83,28 @@ const lesson1Level2: PlainClue[] = [
   },
   {
     text: "A quiet room of screens knows the second code.",
+    shift: 2,
     hints: [
       "A different Caesar shift means a different key.",
-      "Move the ciphertext letters backward by 7.",
+      "Move the ciphertext letters backward by 2.",
       "Eliminate places without screens or keyboards."
     ]
   },
   {
     text: "Follow the wires, not the hallway noise.",
+    shift: 13,
     hints: [
       "The clue is evidence, not the final answer by itself.",
-      "The key controls how ciphertext becomes plaintext.",
+      "This clue uses shift 13; the key controls how ciphertext becomes plaintext.",
       "Wires and network maps usually live near computers."
     ]
   },
   {
     text: "The review files left footprints near the network map.",
+    shift: 19,
     hints: [
       "Do not guess from one word; decrypt the whole strip.",
-      "Shift each letter backward by the same number: 7.",
+      "Shift each letter backward by the same number: 19.",
       "A network map is a strong location clue."
     ]
   }
@@ -101,6 +113,7 @@ const lesson1Level2: PlainClue[] = [
 const lesson1Level3: PlainClue[] = [
   {
     text: "Every message left a shadow.",
+    shift: 4,
     hints: [
       "This final log entry still uses Caesar.",
       "Use shift 4 and read the decrypted sentence carefully.",
@@ -109,22 +122,25 @@ const lesson1Level3: PlainClue[] = [
   },
   {
     text: "Voices travel farther than we think.",
+    shift: 9,
     hints: [
       "Eavesdropping means watching or listening without joining.",
-      "Move letters backward by 4 to reveal the log line.",
+      "Move letters backward by 9 to reveal this log line.",
       "This clue describes observation, not attack."
     ]
   },
   {
     text: "Encrypted notes can still be watched.",
+    shift: 14,
     hints: [
       "The watcher did not change the trail.",
-      "The Caesar key is 4 for this error log.",
+      "The Caesar key is 14 for this error log clue.",
       "Look at the first letters of the decrypted clues together."
     ]
   },
   {
     text: "The watcher only observed.",
+    shift: 21,
     hints: [
       "This clue does not name a villain.",
       "Observed means saw or listened without changing anything.",
@@ -182,7 +198,7 @@ export const quests: Quest[] = [
         story:
           "It is the week before finals. Students open the LMS to download the final review guide, but the file is replaced by a short encrypted message. The teacher smiles and says it may be a cryptography trail. The first level sends the Cipher Recovery Team away from the screen and into the school.",
         cipherType: "caesar",
-        cipherKey: "3",
+        cipherKey: "varies",
         finalQuestion: "Where does the first clue send the team?",
         acceptedAnswers: ["library", "the library", "media center", "library desk", "where books are", "where printers are"],
         explanation:
@@ -196,7 +212,7 @@ export const quests: Quest[] = [
         story:
           "At the library, the printer wakes up and sends out thin strips of encrypted paper like finals-week fortune cookies. Each strip gives part of the next step. The old key no longer works, so the team must notice that the cipher key matters.",
         cipherType: "caesar",
-        cipherKey: "7",
+        cipherKey: "varies",
         finalQuestion: "Where should the team go next? A. Cafeteria B. Computer Lab C. Gym D. Nurse Office",
         acceptedAnswers: ["b", "computer lab", "the computer lab", "room with computers", "room with keyboards", "network room"],
         explanation:
@@ -210,7 +226,7 @@ export const quests: Quest[] = [
         story:
           "In the computer lab, the LMS error log opens on the main screen. It does not show that anyone broke the system. Instead, it shows that someone has been observing the encrypted trail. The final level asks the team to decrypt the evidence and type the name the trail reveals.",
         cipherType: "caesar",
-        cipherKey: "4",
+        cipherKey: "varies",
         finalQuestion: "What name does the trail reveal?",
         acceptedAnswers: ["eve", "the name is eve", "the watcher is eve"],
         explanation:
@@ -232,7 +248,7 @@ export const quests: Quest[] = [
         story:
           "Now that the Cipher Recovery Team knows Eve can watch messages, the class tests a scary idea: if a message uses Caesar cipher, Eve can simply try every shift until one makes sense.",
         cipherType: "caesar",
-        cipherKey: "9",
+        cipherKey: "varies",
         finalQuestion: "Why is Caesar cipher weak against Eve?",
         acceptedAnswers: ["eve can try every shift", "only 25 shifts", "brute force", "try all shifts", "caesar has too few keys"],
         explanation:
@@ -240,11 +256,13 @@ export const quests: Quest[] = [
         clues: buildCaesarClues("l2-r1", 9, [
           {
             text: "Eve can test each shift before the final bell.",
+            shift: 9,
             hints: ["This uses Caesar with shift 9.", "Try shifting backward by 9.", "Count how many Caesar shifts Eve would need to try."]
           },
           {
             text: "Twenty five wrong keys is not enough protection.",
-            hints: ["The alphabet only has 26 positions.", "One shift is plain text, leaving the rest easy to test.", "This is the idea of brute force."]
+            shift: 17,
+            hints: ["The alphabet only has 26 positions.", "This clue uses shift 17; move backward to test it.", "This is the idea of brute force."]
           }
         ])
       },
@@ -255,7 +273,7 @@ export const quests: Quest[] = [
         story:
           "During finals week, the LMS announcement changes by itself. This is not just watching anymore. Mallory has entered the system and is trying to trick students with a fake update.",
         cipherType: "caesar",
-        cipherKey: "5",
+        cipherKey: "varies",
         finalQuestion: "Who is changing or attacking the LMS?",
         acceptedAnswers: ["mallory", "the attacker is mallory", "mallory is attacking", "mallory changed it"],
         explanation:
@@ -263,11 +281,13 @@ export const quests: Quest[] = [
         clues: buildCaesarClues("l2-r2", 5, [
           {
             text: "Mallory changed the finals announcement.",
+            shift: 5,
             hints: ["This message is Caesar again.", "Shift backward by 5.", "The clue names someone who acts, not someone who only watches."]
           },
           {
             text: "The new link points away from the real LMS.",
-            hints: ["Decrypt the whole clue before deciding what happened.", "Use key 5.", "A fake link is a trick, not eavesdropping."]
+            shift: 12,
+            hints: ["Decrypt the whole clue before deciding what happened.", "Use key 12.", "A fake link is a trick, not eavesdropping."]
           }
         ])
       },

@@ -108,7 +108,6 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
         <Panel>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-black">Your encrypted clue</h2>
-            <span className="rounded bg-gold/20 px-2 py-1 text-sm font-bold">{state.clue.cipherType} key: {state.clue.cipherKey}</span>
           </div>
           <div className="rounded-md bg-ink p-4 font-mono text-lg text-white">{state.clue.encryptedText}</div>
           <label className="mt-4 block text-sm font-bold">Decrypted clue</label>
