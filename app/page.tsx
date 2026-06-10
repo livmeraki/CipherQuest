@@ -24,7 +24,7 @@ export default function HomePage() {
             <p className="font-mono text-mint">WKH EDG JXBV ZDQW VWXGHQW SDVVZRUGV.</p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {["Plaintext", "Ciphertext", "Key", "Eve"].map((term) => (
+            {["Plaintext", "Ciphertext", "Key", "Caesar"].map((term) => (
               <div key={term} className="rounded-md border border-ink/10 bg-paper p-4">
                 <p className="font-black">{term}</p>
                 <p className="text-sm text-ink/70">A core idea students meet through play.</p>
