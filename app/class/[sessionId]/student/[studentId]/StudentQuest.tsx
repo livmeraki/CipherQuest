@@ -112,13 +112,10 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
           <p className="text-sm font-black uppercase tracking-wide text-coral">Case reveal</p>
           <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">The Trail Reveals Eve</h1>
           <p className="mt-6 text-xl leading-9 text-ink/75">
-            The final error log did not reveal a person changing the LMS. It revealed someone watching. Eve is an eavesdropper:
-            someone who quietly observes messages that were not meant for them. Eve did not rewrite the trail or break the review
-            guide. Eve showed the class why secret messages matter.
+            In cryptography, Eve is the name often used for an eavesdropper. An eavesdropper is someone who watches or listens to messages that are not meant for them. Eve is not necessarily the attacker. She does not have to change anything. Sometimes, simply being able to watch private information is already dangerous.
           </p>
           <p className="mt-4 text-lg leading-8 text-ink/70">
-            In the next lesson, the danger grows. Mallory is different from Eve. Eve watches; Mallory changes, tricks, and attacks.
-            That is why modern encryption needs to protect messages from being read and from being tampered with.
+            If Eve was only watching… who messed with the LMS?
           </p>
         </Panel>
 
