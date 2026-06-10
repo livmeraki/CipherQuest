@@ -27,7 +27,12 @@ export default function HomePage() {
             {["Plaintext", "Ciphertext", "Key", "Caesar"].map((term) => (
               <div key={term} className="rounded-md border border-ink/10 bg-paper p-4">
                 <p className="font-black">{term}</p>
-                <p className="text-sm text-ink/70">A core idea students meet through play.</p>
+                <p className="text-sm text-ink/70">
+                  {term === "Plaintext" && "The original, readable message."}
+                  {term === "Ciphertext" && "The encrypted message."}
+                  {term === "Key" && "The value used to encrypt or decrypt the message."}
+                  {term === "Caesar" && "A type of substitution cipher where each letter is shifted by a fixed number of positions."}
+                </p>
               </div>
             ))}
           </div>

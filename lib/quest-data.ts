@@ -112,7 +112,7 @@ const lesson1Level2: PlainClue[] = [
 
 const lesson1Level3: PlainClue[] = [
   {
-    text: "Every message left a shadow.",
+    text: "E..very message left a shadow.",
     shift: 4,
     hints: [
       "This final log entry still uses Caesar, but the name is hidden in a pattern.",
@@ -121,7 +121,7 @@ const lesson1Level3: PlainClue[] = [
     ]
   },
   {
-    text: "Voices travel farther than we think.",
+    text: "V..oices travel farther than we think.",
     shift: 9,
     hints: [
       "This clue describes messages being heard beyond the intended team.",
@@ -130,7 +130,7 @@ const lesson1Level3: PlainClue[] = [
     ]
   },
   {
-    text: "Encrypted notes can still be watched.",
+    text: "E..ncrypted notes can still be watched.",
     shift: 14,
     hints: [
       "The log is about observation, not changing or breaking the trail.",
@@ -187,7 +187,7 @@ export const quests: Quest[] = [
         orderIndex: 1,
         title: "The Frozen Review Guide",
         story:
-          "It is the week before finals. Students open the LMS to download the final review guide, but the file is replaced by a short encrypted message. The teacher smiles and says it may be a cryptography trail. The first level sends the Cipher Recovery Team away from the screen and into the school.",
+          "Story: It is the week before finals. You open the LMS to look at the review guide, but the whole site just shows encrypted messages. The teacher frowns and says the site is compromised. Unfortunately, it turns out the review file on LMS was the only copy! You need to follow the trail of clues to find where the first message is leading you. The teacher hints that the old Caesar cipher might be involved, but the key is missing. Can your team find the key, decrypt the message, and follow the trail to the first clue?",
         cipherType: "caesar",
         cipherKey: "varies",
         finalQuestion: "Where does the first clue send the team?",
@@ -201,7 +201,7 @@ export const quests: Quest[] = [
         orderIndex: 2,
         title: "The Printer Trail",
         story:
-          "At the library, the printer wakes up and sends out thin strips of encrypted paper like finals-week fortune cookies. Each strip gives part of the next step. The old key no longer works, so the team must notice that the cipher key matters.",
+          "At the library, the printer wakes up and sends out thin strips of encrypted paper like finals-week fortune cookies. Each strip gives part of the next step...",
         cipherType: "caesar",
         cipherKey: "varies",
         finalQuestion: "Where should the team go next? A. Cafeteria B. Computer Lab C. Gym D. Nurse Office",
@@ -213,12 +213,12 @@ export const quests: Quest[] = [
       {
         id: "l1-r3",
         orderIndex: 3,
-        title: "The Error Log",
+        title: "The Girl in the Logs",
         story:
-          "In the computer lab, the LMS error log opens on the main screen. It does not show that anyone broke the system. Instead, it shows that someone has been observing the encrypted trail. The final level asks the team to decrypt the evidence and type the name the trail reveals.",
+          "In the computer lab, the largest monitor suddenly lights up with scrolling logs. A girl is visible on the screen, staring silently as log after log rushes by. It looks as if she is watching private data, listening in without joining, and following the trail the team has been solving. When the CSI team asks who she is, she does not answer normally. She responds only in encrypted lines. The team must decrypt the clues and discover her name.",
         cipherType: "caesar",
         cipherKey: "varies",
-        finalQuestion: "What name does the trail reveal?",
+        finalQuestion: "What name does the trail reveal? (Hint: The first letters of the decrypted clues)",
         acceptedAnswers: ["eve", "the name is eve", "the watcher is eve"],
         explanation:
           "The first three decrypted clues begin with E, V, and E. Today you learned how messages can be hidden using Caesar cipher, and the trail revealed Eve. Eve is not necessarily someone who changes or attacks messages. In cryptography, Eve represents an eavesdropper: someone who silently watches communication. Next lesson, you will learn why stopping Eve is difficult and why modern encryption is needed.",
@@ -229,7 +229,7 @@ export const quests: Quest[] = [
   {
     id: "lesson-2-wifi-trap",
     lesson: "Lesson 2",
-    title: "The Final Bell Cipher: Mallory Enters the System",
+    title: "The Final Bell Cipher: Mallicious Attack",
     description: "Intro to Cryptography: Can You Stop Eve? From Caesar Cipher to Modern Encryption",
     rounds: [
       {
