@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Lightbulb } from "lucide-react";
+import { CheckCircle2, Lightbulb, Trophy } from "lucide-react";
 import {
   completeStudentClueSubmissionCloud,
   setStudentConnectionStatusCloud,
@@ -53,6 +53,7 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
   }
 
   const currentClueId = state.clue?.id ?? "";
+  const activeRound = state.round;
   const decrypted = currentClueId ? decryptedByClue[currentClueId] ?? "" : "";
   const hintLevel = currentClueId ? hintLevelByClue[currentClueId] ?? 0 : 0;
   const feedback = currentClueId ? feedbackByClue[currentClueId] ?? "" : "";
@@ -96,6 +97,49 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
   const ownClueCorrect = state.student.status === "submitted" || state.student.status === "correct";
   const teamMembers = session.students.filter((student) => state.team?.memberIds.includes(student.id));
   const visibleTeammates = teamMembers.filter((student) => (student.solvedClueIds ?? []).length > 0);
+  const placements = session.teams
+    .filter((team) => team.memberIds.length > 0 && team.finalAnswers[activeRound.id]?.isCorrect)
+    .sort((a, b) => {
+      const aTime = new Date(a.finalAnswers[activeRound.id]?.submittedAt ?? 0).getTime();
+      const bTime = new Date(b.finalAnswers[activeRound.id]?.submittedAt ?? 0).getTime();
+      return aTime - bTime;
+    });
+
+  if (session.phase === "results") {
+    return (
+      <div className="mx-auto max-w-6xl space-y-5">
+        <Panel className="p-8 sm:p-10">
+          <p className="text-sm font-black uppercase tracking-wide text-coral">Case reveal</p>
+          <h1 className="mt-3 text-4xl font-black leading-tight sm:text-5xl">The Trail Reveals Eve</h1>
+          <p className="mt-6 text-xl leading-9 text-ink/75">
+            The final error log did not reveal a person changing the LMS. It revealed someone watching. Eve is an eavesdropper:
+            someone who quietly observes messages that were not meant for them. Eve did not rewrite the trail or break the review
+            guide. Eve showed the class why secret messages matter.
+          </p>
+          <p className="mt-4 text-lg leading-8 text-ink/70">
+            In the next lesson, the danger grows. Mallory is different from Eve. Eve watches; Mallory changes, tricks, and attacks.
+            That is why modern encryption needs to protect messages from being read and from being tampered with.
+          </p>
+        </Panel>
+
+        <Panel>
+          <div className="mb-4 flex items-center gap-2">
+            <Trophy className="text-gold" size={26} />
+            <h2 className="text-2xl font-black">Team Finish Order</h2>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {placements.slice(0, 3).map((team, index) => (
+              <div key={team.id} className="rounded-lg border border-ink/10 bg-paper p-5 text-center">
+                <p className="text-3xl font-black text-teal">{["1st", "2nd", "3rd"][index]}</p>
+                <p className="mt-2 text-xl font-black">{team.name}</p>
+              </div>
+            ))}
+          </div>
+          {!placements.length && <p className="text-ink/70">Waiting for team results.</p>}
+        </Panel>
+      </div>
+    );
+  }
 
   if (session.phase !== "clues") {
     return (
@@ -179,7 +223,7 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
             </>
           ) : (
             <p className="rounded-md bg-mint p-4 font-semibold text-teal">
-              No active clue is assigned to you right now. Check the team board and help prepare the final answer.
+              Well done! No more clues are assigned to you right now. Check the team board and help prepare the final answer.
             </p>
           )}
         </Panel>

@@ -215,19 +215,31 @@ export function setStudentConnectionStatus(sessionId: string, studentId: string,
 }
 
 export function updateTeamAnswer(sessionId: string, teamId: string, roundId: string, answer: string, isCorrect: boolean) {
-  updateSession(sessionId, (session) => ({
-    ...session,
-    teams: session.teams.map((team) =>
+  updateSession(sessionId, (session) => {
+    const updated = {
+      ...session,
+      teams: session.teams.map((team) =>
       team.id === teamId
         ? { ...team, finalAnswers: { ...team.finalAnswers, [roundId]: { answer, isCorrect, submittedAt: new Date().toISOString() } } }
         : team
-    )
-  }));
+      )
+    };
+    return maybeShowResults(updated, roundId);
+  });
+}
+
+function maybeShowResults(session: ClassSession, roundId: string): ClassSession {
+  const quest = quests.find((item) => item.id === session.questId);
+  if (quest?.id !== "lesson-1-school-notes" || roundId !== "l1-r3") return session;
+  const activeTeams = session.teams.filter((team) => team.memberIds.length > 0);
+  if (!activeTeams.length) return session;
+  const allCorrect = activeTeams.every((team) => team.finalAnswers[roundId]?.isCorrect);
+  return allCorrect ? { ...session, phase: "results" } : session;
 }
 
 export function assignTeams(sessionId: string, teamCount = 2) {
   updateSession(sessionId, (session) => {
-    const count = Math.max(1, Math.min(teamCount, Math.max(session.students.length, 1)));
+    const count = Math.max(1, Math.min(teamCount, 6));
     const teams: Team[] = Array.from({ length: count }, (_, index) => ({
       id: session.teams[index]?.id ?? createId(),
       name: `Team ${String.fromCharCode(65 + index)}`,
@@ -447,20 +459,23 @@ export async function setStudentConnectionStatusCloud(sessionId: string, student
 
 export async function updateTeamAnswerCloud(sessionId: string, teamId: string, roundId: string, answer: string, isCorrect: boolean) {
   if (!hasSupabaseConfig) return updateTeamAnswer(sessionId, teamId, roundId, answer, isCorrect);
-  await updateCloudSession(sessionId, (session) => ({
-    ...session,
-    teams: session.teams.map((team) =>
+  await updateCloudSession(sessionId, (session) => {
+    const updated = {
+      ...session,
+      teams: session.teams.map((team) =>
       team.id === teamId
         ? { ...team, finalAnswers: { ...team.finalAnswers, [roundId]: { answer, isCorrect, submittedAt: new Date().toISOString() } } }
         : team
-    )
-  }));
+      )
+    };
+    return maybeShowResults(updated, roundId);
+  });
 }
 
 export async function assignTeamsCloud(sessionId: string, teamCount = 2) {
   if (!hasSupabaseConfig) return assignTeams(sessionId, teamCount);
   await updateCloudSession(sessionId, (session) => {
-    const count = Math.max(1, Math.min(teamCount, Math.max(session.students.length, 1)));
+    const count = Math.max(1, Math.min(teamCount, 6));
     const teams: Team[] = Array.from({ length: count }, (_, index) => ({
       id: session.teams[index]?.id ?? createId(),
       name: `Team ${String.fromCharCode(65 + index)}`,

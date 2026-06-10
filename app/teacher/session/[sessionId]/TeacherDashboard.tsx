@@ -57,11 +57,13 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
             <p className="text-sm font-bold text-teal">Class code</p>
             <h1 className="font-mono text-5xl font-black">{session.code}</h1>
             <p className="mt-2 text-ink/70">{quest.title} · {round.title}</p>
-            <p className="mt-1 text-sm font-bold text-teal">Class phase: {session.phase === "clues" ? "Decrypting" : "Level intro"}</p>
+            <p className="mt-1 text-sm font-bold text-teal">
+              Class phase: {session.phase === "results" ? "Results" : session.phase === "clues" ? "Decrypting" : "Level intro"}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => void startSessionCloud(session.id)} disabled={!session.students.length || session.status === "active"}><Play size={18} />Start quest</Button>
-            <Button variant="secondary" onClick={() => void updatePhaseCloud(session.id, "clues")} disabled={session.status !== "active" || session.phase === "clues"}>
+            <Button variant="secondary" onClick={() => void updatePhaseCloud(session.id, "clues")} disabled={session.status !== "active" || session.phase !== "intro"}>
               <Play size={18} />Begin decrypting
             </Button>
             <Button variant="secondary" onClick={() => void updateStatusCloud(session.id, "paused")}>Pause</Button>
@@ -98,9 +100,11 @@ export function TeacherDashboard({ sessionId }: { sessionId: string }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => void assignTeamsCloud(session.id, 2)} disabled={session.status === "active" || session.students.length < 2}>Split into 2</Button>
-            <Button variant="secondary" onClick={() => void assignTeamsCloud(session.id, 3)} disabled={session.status === "active" || session.students.length < 3}>Split into 3</Button>
-            <Button variant="secondary" onClick={() => void assignTeamsCloud(session.id, 4)} disabled={session.status === "active" || session.students.length < 4}>Split into 4</Button>
+            {[2, 3, 4, 5, 6].map((count) => (
+              <Button key={count} variant="secondary" onClick={() => void assignTeamsCloud(session.id, count)} disabled={session.status === "active"}>
+                Split into {count}
+              </Button>
+            ))}
           </div>
         </div>
       </Panel>
