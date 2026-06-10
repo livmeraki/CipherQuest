@@ -297,6 +297,8 @@ export function subscribeClassSession(sessionId: string, callback: (session: Cla
   return subscribeSessions(refresh);
 }
 
+export const subscribeClassroomSession = subscribeClassSession;
+
 export async function setStudentStatusCloud(sessionId: string, studentId: string, status: Student["status"]) {
   if (!hasSupabaseConfig) return setStudentStatus(sessionId, studentId, status);
   await updateCloudSession(sessionId, (session) => ({

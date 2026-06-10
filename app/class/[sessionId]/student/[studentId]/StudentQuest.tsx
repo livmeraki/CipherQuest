@@ -5,7 +5,7 @@ import { CheckCircle2, Lightbulb } from "lucide-react";
 import {
   setStudentConnectionStatusCloud,
   setStudentStatusCloud,
-  subscribeClassSession,
+  subscribeClassroomSession,
   updateTeamAnswerCloud
 } from "@/lib/classroom-store";
 import { getQuest } from "@/lib/quest-data";
@@ -22,7 +22,7 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    return subscribeClassSession(sessionId, setSession);
+    return subscribeClassroomSession(sessionId, setSession);
   }, [sessionId]);
 
   useEffect(() => {
