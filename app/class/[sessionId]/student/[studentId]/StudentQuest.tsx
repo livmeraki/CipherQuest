@@ -115,7 +115,7 @@ export function StudentQuest({ sessionId, studentId }: { sessionId: string; stud
             In cryptography, Eve is the name often used for an eavesdropper. An eavesdropper is someone who watches or listens to messages that are not meant for them. Eve is not necessarily the attacker. She does not have to change anything. Sometimes, simply being able to watch private information is already dangerous.
           </p>
           <p className="mt-4 text-lg leading-8 text-ink/70">
-            If Eve was only watching… who messed with the LMS?
+            If Eve was only watching… who messed with the LMS? (To be continued in Lesson 2.)
           </p>
         </Panel>
 
